@@ -55,6 +55,22 @@ def VuaTiengViet(lang):
             self.size = size
             self.enabled = 1
 
+
+    class Answer:
+        def __init__(self, quest, ans, timerBegin, timerEnd, time=0, correct=True):
+            self.quest = quest
+            self.ans = ans
+            self.timerBegin = timerBegin
+            self.timerEnd = timerEnd
+            self.time = time
+            self.correct = correct
+
+        def updateTime(self):
+            self.time = self.timerEnd - self.timerBegin
+
+        def updateCorrect(self):
+            self.correct = self.ans == self.quest
+
     with open('./art/question.csv') as f:
         reader = csv.reader(f)
         tempQuestion = [row for row in reader]
@@ -200,7 +216,8 @@ def VuaTiengViet(lang):
                     if (status == True or (xPointMouse != 0 and yPointMouse != 0)) and pointOverlay == False:
                         for idx in question:
                             if (idx.pos[0] <= xPoint <= idx.pos[0] + wButton and idx.pos[1] <= yPoint <= idx.pos[1] + hButton and idx.enabled == 1) or (idx.pos[0] <= xPointMouse <= idx.pos[0] + wButton and idx.pos[1] <= yPointMouse <= idx.pos[1] + hButton and idx.enabled == 1):
-                                resString += idx.text
+                                resString = resString[:-1] + idx.text
+                                resString += '|'
                                 idx.enabled = 0
                                 popUpFalse = False
                                 popUpTrue = False
@@ -212,7 +229,7 @@ def VuaTiengViet(lang):
                             xPointMouse, yPointMouse = 0, 0
                         if ((580 <= xPoint <= 1032 and 301 <= yPoint <= 402) or (580 <= xPointMouse <= 1032 and 301 <= yPointMouse <= 402)) and len(resString) >= len(questions[questNumberNow]):
                             resString = resString.strip()
-                            if resString == questions[questNumberNow]:
+                            if resString[:-1] == questions[questNumberNow]:
                                 score += 10
                                 popUpTrue = True
                                 popUpFalse = False
@@ -230,7 +247,8 @@ def VuaTiengViet(lang):
                         if (729 <= xPoint <= 1181 and 489 <= yPoint <= 590) or (729 <= xPointMouse <= 1181 and 489 <= yPointMouse <= 590):
                             if resString and resString[-1] == ' ':
                                 continue
-                            resString += ' '
+                            resString = resString[:-1] + ' |'
+                            xPointMouse, yPointMouse = 0, 0
                             # resString = " ".join(resString.split())
 
                         if (1746 <= xPoint <= 1851 and 132 <= yPoint <= 237) or (1746 <= xPointMouse <= 1851 and 132 <= yPointMouse <= 237):

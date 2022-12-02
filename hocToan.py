@@ -57,6 +57,21 @@ def HocToan(lang):
             self.enabled = 1
             self.time = 0
 
+    class Answer:
+        def __init__(self, quest, ans, timerBegin, timerEnd, time=0, correct=True):
+            self.quest = quest
+            self.ans = ans
+            self.timerBegin = timerBegin
+            self.timerEnd = timerEnd
+            self.time = time
+            self.correct = correct
+
+        def updateTime(self):
+            self.time = self.timerEnd - self.timerBegin
+
+        def updateCorrect(self):
+            self.correct = self.ans == self.quest
+
     with open('./art/mathQuest.csv') as f:
         reader = csv.reader(f)
         tempQuestion = [row for row in reader]
