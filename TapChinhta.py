@@ -194,7 +194,7 @@ def HocChinhTa(lang):
                 image = cv2.putText(img, str(score), [918 - textsize[0], 746], cv2.FONT_HERSHEY_SIMPLEX, 3, green, 5,
                                     cv2.LINE_AA)
                 fields = ['quest', 'ans', 'time', 'correct']
-                pd.DataFrame([{fn: getattr(f, fn) for fn in fields} for f in ansCsvUser]).to_csv('answers.csv', index=False)
+                pd.DataFrame([{fn: getattr(f, fn) for fn in fields} for f in ansCsvUser]).to_csv('answersHocChinhTa.csv', index=False)
             results = hands.process(imgRGB)
             if results.multi_hand_landmarks:
                 for handLms in results.multi_hand_landmarks:

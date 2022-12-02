@@ -6,6 +6,7 @@ import numpy as np
 import csv
 import random
 import cv2
+import pandas as pd
 
 xPointMouse, yPointMouse = 0, 0
 
@@ -16,7 +17,9 @@ def mouse_click(event, x, y, flags, param):
         print('Click')
         xPointMouse, yPointMouse = x, y
 
+
 def VuaTiengViet(lang):
+    ansCsvUser = []
     frameWidth = 1280
     frameHeight = 720
     cap = cv2.VideoCapture(0)
@@ -29,7 +32,7 @@ def VuaTiengViet(lang):
     pTime = 0
     cTime = 0
 
-    #set color
+    # set color
     black = (0, 0, 0)
     orange = (232, 149, 9)
     green = (50, 194, 26)
@@ -48,13 +51,14 @@ def VuaTiengViet(lang):
     wButton = 85
     disButton = 66
 
-    class Button():
-        def __init__(self, pos, text, size = [85, 85]):
+    class Button:
+        def __init__(self, pos, text, size=None):
+            if size is None:
+                size = [85, 85]
             self.pos = pos
             self.text = text
             self.size = size
             self.enabled = 1
-
 
     class Answer:
         def __init__(self, quest, ans, timerBegin, timerEnd, time=0, correct=True):
@@ -92,7 +96,6 @@ def VuaTiengViet(lang):
         ly = int(np.interp(y - (720 - hCam) // 2, (0, hCam), (0, hScr)))
         return lx, ly
 
-
     def paintPoint(lx, ly, color, radius):
         cv2.circle(img, (lx, ly), radius=radius, color=color, thickness=1)
 
@@ -127,7 +130,7 @@ def VuaTiengViet(lang):
                 cQr = 1
                 cQc = 2
             question.append(Button([xPosButton + (cQr - 1) * (disButton + 85), yPosButton + (cQc - 1) * (49 + 85)], idx))
-        return  question
+        return question
 
     for i in questions:
         swap_random(questions)
@@ -147,7 +150,7 @@ def VuaTiengViet(lang):
             min_tracking_confidence=0.8) as hands:
         while cap.isOpened():
             img = background
-            if showWindow == False:
+            if not showWindow:
                 cv2.destroyAllWindow()
                 showWindow = True
                 time.sleep(2)
@@ -159,6 +162,7 @@ def VuaTiengViet(lang):
             if questNumber == questNumberNow:
                 questNumber += 1
                 question = renderQuest(questNumberNow)
+                ansUser = Answer(questions[questNumberNow], '', time.time(), 0)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             for idx in question:
                 if idx.enabled == 1:
@@ -170,15 +174,17 @@ def VuaTiengViet(lang):
             image = cv2.putText(img, resString, [233, 204], cv2.FONT_HERSHEY_SIMPLEX, 2, black, 2, cv2.LINE_AA)
             image = cv2.putText(img, str(score), [1655, 743], cv2.FONT_HERSHEY_SIMPLEX, 5, green, 7, cv2.LINE_AA)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            if popUpTrue == True:
+            if popUpTrue:
                 img[259:445, 1375:1920] = cv2.imread(f'./art/TrueAnswer{lang}.png')
-            if popUpFalse == True:
+            if popUpFalse:
                 img[259:445, 1375:1920] = cv2.imread(f'./art/WrongAnswer{lang}.png')
-            if pointOverlay == True:
+            if pointOverlay:
                 img = cv2.imread(f'./art/pointTiengViet{lang}.png')
                 textsize = cv2.getTextSize(str(score), cv2.FONT_HERSHEY_SIMPLEX, 3, 5)[0]
                 print(textsize[0])
                 image = cv2.putText(img, str(score), [918 - textsize[0], 746], cv2.FONT_HERSHEY_SIMPLEX, 3, green, 5, cv2.LINE_AA)
+                fields = ['quest', 'ans', 'time', 'correct']
+                pd.DataFrame([{fn: getattr(f, fn) for fn in fields} for f in ansCsvUser]).to_csv('answersVuaTiengViet.csv', index=False)
             results = hands.process(imgRGB)
             if results.multi_hand_landmarks:
                 for handLms in results.multi_hand_landmarks:
@@ -229,6 +235,11 @@ def VuaTiengViet(lang):
                             xPointMouse, yPointMouse = 0, 0
                         if ((580 <= xPoint <= 1032 and 301 <= yPoint <= 402) or (580 <= xPointMouse <= 1032 and 301 <= yPointMouse <= 402)) and len(resString) >= len(questions[questNumberNow]):
                             resString = resString.strip()
+                            ansUser.ans = resString[:-1]
+                            ansUser.timerEnd = time.time()
+                            ansUser.updateTime()
+                            ansUser.updateCorrect()
+                            ansCsvUser.append(ansUser)
                             if resString[:-1] == questions[questNumberNow]:
                                 score += 10
                                 popUpTrue = True
@@ -260,7 +271,6 @@ def VuaTiengViet(lang):
             fps = 1 / (cTime - pTime)
             pTime = cTime
             cv2.putText(img, "FPS= " + str(int(fps)), (10, 20), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 1)
-
 
             # if showWindow == True:
             cv2.imshow('image', img)
